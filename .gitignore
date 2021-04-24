@@ -9,8 +9,10 @@
 /Build/*.exe
 /Build/*.pdb
 /Build/*.dll
+/BUld/*.mdb
 /Build/*.xml
 /Build/KbLog.txt
+/Build/drivers/*
 
 # User-specific files
 *.rsuser
