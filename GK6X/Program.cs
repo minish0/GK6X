@@ -593,6 +593,22 @@ namespace GK6X
                             }
                         }
                         break;
+                    case "help":
+                        {
+                            Console.WriteLine("List of commands:");
+                            Console.WriteLine("  close,exit,quit");
+                            Console.WriteLine("  cls,clear");
+                            Console.WriteLine("  dumpkeys");
+                            Console.WriteLine("  findkeys");
+                            Console.WriteLine("  help");
+                            Console.WriteLine("  gui");
+                            Console.WriteLine("  gui_le");
+                            Console.WriteLine("  gui_to_txt");
+                            Console.WriteLine("  map");
+                            Console.WriteLine("  unmap");
+                            Console.WriteLine("  update_data");
+                        }
+                        break;
                 }
             }
         }
