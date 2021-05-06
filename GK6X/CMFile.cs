@@ -93,9 +93,10 @@ namespace GK6X
                 stream.Position = 4;
                 ushort headerCrc = reader.ReadUInt16();
 
+                // Timestamp is never used
                 // Timestamp is at offset 8, written as 4 bytes
-                stream.Position = 8;
-                int timestamp = reader.ReadInt32();
+                // stream.Position = 8;
+                // int timestamp = reader.ReadInt32();
 
                 // Length is at offset 12, written as 4 bytes
                 stream.Position = 12;
@@ -105,9 +106,10 @@ namespace GK6X
                 stream.Position = 16;
                 ushort dataCrc = reader.ReadUInt16();
 
+                // File type is never used 
                 // File type is at offset 20, written as 4 bytes
-                stream.Position = 20;
-                int fileType = reader.ReadInt32();
+                // stream.Position = 20;
+                // int fileType = reader.ReadInt32();
 
                 // File type (string) is at offset 24, written as 8 bytes, padded with 00
                 stream.Position = 24;

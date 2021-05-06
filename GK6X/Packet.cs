@@ -310,6 +310,7 @@ namespace GK6X
 
         public byte[] ReadBytes(int prefixLength, int count)
         {
+            /*
             long length = 0;
             switch (prefixLength)
             {
@@ -318,6 +319,7 @@ namespace GK6X
                 case 2: length = ReadInt16(); break;
                 case 4: length = ReadInt32(); break;
             }
+            */
             return ReadBytes(count);
         }
 

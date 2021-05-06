@@ -81,9 +81,11 @@ namespace GK6X
             /// <summary>
             /// Key names as defined in the "Macros" tab (this is seemingly not in the data files?)
             /// </summary>
+            /*
             Dictionary<string, DriverValue> keyNames = new Dictionary<string, DriverValue>()
             {
             };
+            */
 
             public bool LoadFile(string path)
             {
