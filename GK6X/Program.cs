@@ -46,17 +46,17 @@ namespace GK6X
 
             if (!Localization.Load())
             {
-                LogFatalError("Failed to load localization data");
+                LogFatalError(GK6XMessages.loadlocalizationdataError);
                 return;
             }
             if (!KeyValues.Load())
             {
-                LogFatalError("Failed to load the key data");
+                LogFatalError(GK6XMessages.loadKeydataError);
                 return;
             }
             if (!KeyboardState.Load())
             {
-                LogFatalError("Failed to load keyboard data");
+                LogFatalError(GK6XMessages.loadKeyboardDataError);
                 return;
             }
 
@@ -70,8 +70,10 @@ namespace GK6X
 
             KeyboardDeviceManager.Connected += (KeyboardDevice device) =>
             {
-                Log("Connected to device '" + device.State.ModelName + "' model:" + device.State.ModelId +
-                    " fw:" + device.State.FirmwareVersion);
+                Log(String.Format(GK6XMessages.connectDeviceFmt,
+                                  device.State.ModelName,
+                                  device.State.ModelId,
+                                  device.State.FirmwareVersion));
                 WebGUI.UpdateDeviceList();
 
                 string file = GetUserDataFile(device);
@@ -96,7 +98,7 @@ namespace GK6X
             };
             KeyboardDeviceManager.Disconnected += (KeyboardDevice device) =>
             {
-                Log("Disconnected from device '" + device.State.ModelName + "'");
+                Log(String.Format(GK6XMessages.disconnectDeviceFmt, device.State.ModelName));
                 WebGUI.UpdateDeviceList();
             };
             KeyboardDeviceManager.StartListener();
@@ -140,6 +142,8 @@ namespace GK6X
 
             bool running = true;
             bool hasNullInput = false;
+            string logMessage = string.Empty;
+            string consoleMessage = string.Empty;
             while (running)
             {
                 string line = Console.ReadLine();
@@ -148,7 +152,7 @@ namespace GK6X
                     // Handler for potential issue where ReadLine() returns null - see https://github.com/pixeltris/GK6X/issues/8
                     if (hasNullInput)
                     {
-                        Console.WriteLine("Cannot read from command line. Exiting.");
+                        Console.WriteLine(GK6XMessages.commandReadError);
                         break;
                     }
                     hasNullInput = true;
@@ -190,16 +194,18 @@ namespace GK6X
                             if (isValidPath)
                             {
                                 UpdateDataFiles(path);
-                                Log("done");
+                                Log(GK6XMessages.updateDataMsg);
                             }
                             else
                             {
-                                Log("Couldn't find path '" + path + "'");
+                                logMessage = String.Format(GK6XMessages.updateDataErrorFmt, path);
+                                Log(logMessage);
                             }
                         }
                         else
                         {
-                            Log("Bad input. Expected folder name.");
+                            logMessage = GK6XMessages.directoryEvalError;
+                            Log(logMessage);
                         }
                         break;
                     case "gui":
@@ -209,7 +215,8 @@ namespace GK6X
                         {
                             if (string.IsNullOrEmpty(WebGUI.UserDataPath))
                             {
-                                Log("Load GUI first");
+                                logMessage = GK6XMessages.gui2txtError;
+                                Log(logMessage);
                             }
                             else
                             {
@@ -289,8 +296,12 @@ namespace GK6X
                                                                     }
                                                                     else
                                                                     {
-                                                                        Log("Failed to map index " + keyIndex + " to " + driverValue + " on layer " + layer +
-                                                                            (i > 0 ? " fn" : string.Empty));
+                                                                        logMessage = String.Format(
+                                                                            GK6XMessages.gui2txtMapError, 
+                                                                            keyIndex, 
+                                                                            driverValue, 
+                                                                            layer + (i > 0 ? " fn" : string.Empty));
+                                                                        Log(logMessage);
                                                                     }
                                                                 }
                                                             }
@@ -351,14 +362,16 @@ namespace GK6X
                                                 }
                                             }
                                             userDataFile.SaveFromGUI(device.State, Path.Combine(UserDataPath, device.State.ModelId + "_exported.txt"));
-                                            Log("Done");
+                                            logMessage = GK6XMessages.gui2txtSave;
+                                            Log(logMessage);
                                             break;
                                         }
                                     }
                                 }
                                 else
                                 {
-                                    Log("Account settings not found for account id " + accountId);
+                                    logMessage = String.Format(GK6XMessages.gui2txtAccountSettingsErrorFmt, accountId);
+                                    Log(logMessage);
                                 }
                             }
                         }
@@ -403,7 +416,8 @@ namespace GK6X
                                                         string effectString = Encoding.UTF8.GetString(CMFile.Load(leFileName));
                                                         effectString = CMFile.FormatJson(effectString);
                                                         File.WriteAllText(Path.Combine(DataBasePath, "lighting", leName + ".le"), effectString);
-                                                        Program.Log("Copied '" + leName + "'");
+                                                        logMessage = String.Format(GK6XMessages.guiLECopiedFmt, leName);
+                                                        Program.Log(logMessage);
                                                         foundFile = true;
                                                     }
                                                 }
@@ -411,29 +425,28 @@ namespace GK6X
                                         }
                                         if (!foundFile)
                                         {
-                                            Program.Log("Failed to find lighting effect '" + leName + "' (it's case sensitive)");
+                                            logMessage = String.Format(GK6XMessages.guiLECSErrorFmt, leName);
+                                            Program.Log(logMessage);
                                         }
                                     }
                                     else
                                     {
-                                        Program.Log("Failed to find file '" + leListFile + "'");
+                                        logMessage = String.Format(GK6XMessages.guiLEFileFindErrorFmt, leListFile);
+                                        Program.Log(logMessage);
                                     }
                                 }
                             }
                             else
                             {
-                                Program.Log("Invalid input. Expected lighting effect name.");
+                                logMessage = GK6XMessages.guiLEInvalidInput;
+                                Program.Log(logMessage);
                             }
                         }
                         break;
                     case "findkeys":
                         {
-                            Log(string.Empty);
-                            Log("This is used to identify keys. Press keys to see their values. Missing keys will generally show up as '(null)' and they need to be mapped in the data files Data/devuces/YOUR_MODEL_ID/");
-                            Log("The 'S' values are what you want to use to map keys in your UserData file.");
-                            Log(string.Empty);
-                            Log("Entering 'driver' mode and mapping all keys to callbacks.");
-                            Log(string.Empty);
+                            logMessage = String.Format(GK6XMessages.findkeysMessageFmt, Environment.NewLine);
+                            Log(logMessage);
                             KeyboardDevice[] devices;
                             if (TryGetDevices(out devices))
                             {
@@ -461,7 +474,8 @@ namespace GK6X
                                     UserDataFile userData = UserDataFile.Load(device.State, GetUserDataFile(device));
                                     if (userData == null)
                                     {
-                                        Log("Couldn't find user data file '" + GetUserDataFile(device) + "'");
+                                        logMessage = String.Format(GK6XMessages.mapUserDataFileLoadErrorFmt, GetUserDataFile(device));
+                                        Log(logMessage);
                                         continue;
                                     }
 
@@ -532,7 +546,7 @@ namespace GK6X
                                     {
                                         device.SetLayer(KeyboardLayer.Base);
                                     }
-                                    Log("Done");
+                                    Log(GK6XMessages.mapUserDataFileLoad);
                                 }
                             }
                         }
@@ -558,7 +572,8 @@ namespace GK6X
                             {
                                 foreach (KeyboardDevice device in devices)
                                 {
-                                    Log("====== " + device.State.ModelId + " ======");
+                                    logMessage = String.Format(GK6XMessages.dumpkeysHeaderFmt, device.State.ModelId);
+                                    Log(logMessage);
                                     bool foundKey = false;
                                     int lastLeft = int.MinValue;
                                     int row = 1;
@@ -571,7 +586,7 @@ namespace GK6X
                                             {
                                                 if (targetRow == -1)
                                                 {
-                                                    Log("--------");
+                                                    Log(GK6XMessages.dumpkeysRowSeparator);
                                                 }
                                                 foundKey = false;
                                                 row++;
@@ -595,18 +610,9 @@ namespace GK6X
                         break;
                     case "help":
                         {
-                            Console.WriteLine("List of commands:");
-                            Console.WriteLine("  close,exit,quit");
-                            Console.WriteLine("  cls,clear");
-                            Console.WriteLine("  dumpkeys");
-                            Console.WriteLine("  findkeys");
-                            Console.WriteLine("  help");
-                            Console.WriteLine("  gui");
-                            Console.WriteLine("  gui_le");
-                            Console.WriteLine("  gui_to_txt");
-                            Console.WriteLine("  map");
-                            Console.WriteLine("  unmap");
-                            Console.WriteLine("  update_data");
+                            consoleMessage = String.Format(GK6XMessages.helpListCommandsFmt, Environment.NewLine);
+                            Console.WriteLine(consoleMessage);
+
                         }
                         break;
                 }
@@ -627,7 +633,7 @@ namespace GK6X
             }
             else
             {
-                Log("No devices connected!");
+                Log(GK6XMessages.noDeviceConnected);
                 return false;
             }
         }
@@ -771,7 +777,7 @@ namespace GK6X
             string zeroJsFile = Path.Combine(srcDir, "0.formatted.js");
             if (!File.Exists(indexJsFile) || !File.Exists(zeroJsFile))
             {
-                Log("Couldn't find formatted js files to process!");
+                Log(GK6XMessages.noJSFileToProcess);
                 return;
             }
 
@@ -837,7 +843,7 @@ namespace GK6X
             }
             else
             {
-                Log("Missing directory / file!");
+                Log(GK6XMessages.missingDirectoryOrFile);
             }
         }
 
