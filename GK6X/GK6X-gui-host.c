@@ -6,12 +6,16 @@
 
 // GK6X-gui.bat builds GK6X in GUI mode (no console). GK6X-gui-host.c is used to host that GUI within a native application under .NET Core (portability)
 
-// TODO: Add support for Linux
+// Linux build instruction
+// make
+// or if you do not have make
+// sh GK6X-gui.sh
 
 // This is basically a copy of the coreclr hosts but in C rather than C++
 // https://github.com/dotnet/coreclr/blob/master/src/coreclr/hosts
 
 #define ASSEMBLY_NAME "GK6X-gui"
+#define ASSEMBLY_SUFFIX ".exe"
 #define ASSEMBLY_ENTRY_POINT_CLASS "GK6X.Program"
 #define ASSEMBLY_ENTRY_POINT_METHOD "DllMain"
 
@@ -20,12 +24,15 @@
 #else
 #define PLATFORM_WINDOWS 0
 #endif
-
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
+#if defined(__linux__)
+// PATH_MAX is defined in linux/limits.h
+#include <linux/limits.h>
+#endif
 #include <sys/stat.h>
 #if PLATFORM_WINDOWS
 #include <windows.h>
@@ -117,9 +124,9 @@ char* GetFullPath(const char* path, char* resolvedPath)
 #endif
 }
 
-int main(int argv, const char** argc)
+int main(int argc, const char** argv)
 {
-    if (argv <= 0)
+    if (argc < 1)
     {
         printf("Invalid args.\n");
         return 0;
@@ -130,9 +137,9 @@ int main(int argv, const char** argc)
     char coreCrlDllPath[PATH_MAX+1];
     char assemblyDir[PATH_MAX+1];
     char assemblyPath[PATH_MAX+1];
-    if (GetFullPath(argc[0], currentBinaryPath) == NULL)
+    if (GetFullPath(*argv, currentBinaryPath) == NULL)
     {
-        printf("Failed to find path of the binary '%s'.\n", argc[0]);
+        printf("Failed to find path of the binary '%s'.\n", *argv);
         return 0;
     }
     
@@ -144,15 +151,18 @@ int main(int argv, const char** argc)
         printf("Invalid binary path '%s'.\n", dirPath);
         return 0;
     }
-    dirPathEnd[0] = '\0';
+    *dirPathEnd = '\0';
     
     // Need the assembly directory for APP_PATHS
-    strcpy(assemblyDir, dirPath);
-    
-    strcpy(assemblyPath, assemblyDir);
-    strcat(assemblyPath, SLASH_CHAR_STR);
-    strcat(assemblyPath, ASSEMBLY_NAME);
-    strcat(assemblyPath, ".exe");
+    strncpy(assemblyDir, dirPath, sizeof(assemblyDir));
+    snprintf(assemblyPath,
+            sizeof(assemblyPath),
+            "%s%s%s%s",
+            assemblyDir,
+            SLASH_CHAR_STR,
+            ASSEMBLY_NAME,
+            ASSEMBLY_SUFFIX);
+
     if (!FileExists(assemblyPath))
     {
         printf("Failed to find managed assembly '%s'.\n", assemblyPath);
@@ -160,13 +170,19 @@ int main(int argv, const char** argc)
     }
     
     // Need the .NET Core directory for APP_PATHS
-    strcpy(coreCrlDir, dirPath);
-    strcat(coreCrlDir, SLASH_CHAR_STR);
-    strcat(coreCrlDir, "CoreCLR");
-    
-    strcpy(coreCrlDllPath, coreCrlDir);
-    strcat(coreCrlDllPath, SLASH_CHAR_STR);
-    strcat(coreCrlDllPath, CORE_CLR_DLL);
+    snprintf(coreCrlDir,
+            sizeof(coreCrlDir),
+            "%s%s%s",
+            dirPath, 
+            SLASH_CHAR_STR,
+            "CoreCLR");
+    snprintf(coreCrlDllPath,
+            sizeof(coreCrlDllPath),
+            "%s%s%s",
+            coreCrlDir,
+            SLASH_CHAR_STR,
+            CORE_CLR_DLL);
+
     if (!FileExists(coreCrlDllPath))
     {
         printf("Failed to find .NET Core '%s'.\n", coreCrlDllPath);
@@ -198,13 +214,16 @@ int main(int argv, const char** argc)
     // Use both the CoreCLR directory and the target assembly directory for APP_PATHS so that
     // it can resolve CoreCLR system assemblies
     char appPaths[0x10000] = {0};
-    strcat(appPaths, coreCrlDir);
-    strcat(appPaths, CORE_CLR_FILE_SPLIT);
-    strcat(appPaths, assemblyDir);
+    snprintf(appPaths,
+            sizeof(appPaths),
+            "%s%s%s",
+            coreCrlDir,
+            CORE_CLR_FILE_SPLIT,
+            assemblyDir);
     
     // We may need to trust more assemblies, for now just add our target assembly
     char trustedAssemblies[0x10000] = {0};
-    strcat(trustedAssemblies, assemblyPath);
+    strncpy(trustedAssemblies, assemblyPath, sizeof(trustedAssemblies));
     
     const char* propertyKeys[] =
     {
