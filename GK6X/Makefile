@@ -61,7 +61,7 @@ MAKEFILE      = Makefile
 OBJS          = GK6X-gui-host
 
 # make finally build
-PROGRAM       = obj/Debug/GK6X-gui.exe
+PROGRAM       = obj/Debug/GK6X-gui.exe obj/Debug/GK6X-gui.exe.mdb
 
 # source files
 SRCS          = GK6X-gui-host.c
@@ -81,7 +81,7 @@ $(PROGRAM):	$(OBJS)
 # clean up object files (%make clean)
 clean: 
 	@echo -n "cleaning objects ... "
-	@rm -f $(OBJS)
+	@rm -f $(OBJS) $(PROGRAM)
 	@echo "done"
 
 program:        $(PROGRAM)
